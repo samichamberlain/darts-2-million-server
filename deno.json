@@ -3,6 +3,12 @@
     "dev": "deno run --watch --allow-net main.ts"
   },
   "imports": {
-    "@std/assert": "jsr:@std/assert@1"
+    "@std/assert": "jsr:@std/assert@1",
+    "prisma": "npm:prisma@8.0.0-rc.19"
+  },
+  "nodeModulesDir": "auto",
+  "allowScripts": {
+    "allow": [],
+    "deny": ["npm:esbuild@0.28.2", "npm:workerd@1.20260901.1"]
   }
 }
