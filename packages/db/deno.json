@@ -1,0 +1,20 @@
+{
+  "tasks": {
+    "db:push": "deno run -A --env=.env npm:prisma db push",
+    "db:push:prod": "deno run -A --env=.prod.env npm:prisma db push",
+    "db:generate": "deno run -A --env=.env npm:prisma generate"
+  },
+  "imports": {
+    "@prisma/client": "npm:@prisma/client@^7.10.0",
+    "@prisma/config": "npm:@prisma/config@^7.10.0",
+    "@prisma/extension-accelerate": "npm:@prisma/extension-accelerate@^3.0.1",
+    "dotenv": "npm:dotenv@^18.0.5",
+    "dotenv-cli": "npm:dotenv-cli@^11.0.0",
+    "prisma": "npm:prisma@8.0.0-rc.19"
+  },
+  "nodeModulesDir": "auto",
+  "allowScripts": {
+    "allow": [],
+    "deny": ["npm:@prisma/engines@7.10.0", "npm:esbuild@0.28.2", "npm:prisma@7.10.0", "npm:workerd@1.20260901.1"]
+  }
+}

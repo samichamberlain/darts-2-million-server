@@ -1,6 +1,9 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-net main.ts"
+    "dev": "deno run --watch --allow-net main.ts",
+    "db:push": "deno task --cwd=packages/db db:push",
+    "db:push:prod": "deno task --cwd=packages/db db:push:prod",
+    "db:generate": "deno task --cwd=packages/db db:generate"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
