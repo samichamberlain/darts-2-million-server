@@ -1,18 +1,23 @@
-export function handler(req: Request): Response {
-  const url = new URL(req.url);
 
-  if (url.pathname === "/api") {
-    return Response.json({
-      message: "Hello, world!",
-      time: new Date().toISOString(),
-    });
+//env
+const PORT = Number(Deno.env.get("PORT"));
+
+
+//serve websockets to client -- must be on HTTP1.1 / ws:// through caddy
+Deno.serve({port: PORT}, (req) => {
+  if(req.headers.get("upgrade") !== "websocket") {
+    return new Response(null, {status: 501})
   }
 
-  return new Response("<h1>Welcome to Deno!</h1>", {
-    headers: { "content-type": "text/html" },
-  });
-}
+  const {socket, response} = Deno.upgradeWebSocket(req)
 
-if (import.meta.main) {
-  Deno.serve(handler);
-}
+  socket.addEventListener("open", () => {
+    console.log("[Darts 2' Million] :: A client has connected");
+  })
+
+  socket.addEventListener("close", () => {
+    console.log("[Darts 2' Million] :: A client has connected")
+  })
+
+  return response;
+})
