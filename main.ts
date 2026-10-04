@@ -8,7 +8,7 @@ const handler = io.handler();
 
 //serve websockets to client -- must be on HTTP1.1 / ws://
 Deno.serve({ port: PORT }, async (req, info) => {
-  const landing = await Deno.readTextFile("./public/index.html");
+  const landing = await Deno.readTextFile("public/index.html");
   if (req.headers.get("upgrade") !== "websocket") {
     return new Response(landing, {
       status: 200,
