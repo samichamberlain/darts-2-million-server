@@ -96,7 +96,10 @@ export class WebSocketCtx<
   //zod schema inference for emit and on callbacks
   constructor(_listenCallbacks: TListen, _emitCallbacks: TEmit) {}
 
-  on<K extends keyof TListen & string>(event: K, handler: OnHandler) {
+  on<K extends keyof TListen & string>(
+    event: K,
+    handler: OnHandler<z.infer<TListen[K]>>,
+  ) {
     //cache for future conns.
     onHandlerRegistry.set(event, [
       ...(onHandlerRegistry.get(event) ?? []),
@@ -171,18 +174,18 @@ export type SocketCommandCallback<TArgs, TReturn> = {
 };
 
 //on callback handling cache
-type OnHandler = (
+type OnHandler<TOnArgs> = (
   socket: ServerSocket,
-  payload: unknown,
+  payload: TOnArgs,
   room: string,
 ) => void | Promise<void>;
-const onHandlerRegistry = new Map<string, OnHandler[]>();
+const onHandlerRegistry = new Map<string, OnHandler<any>[]>();
 
 //Bind client callback handlers
 function bindCallbacks(
   socket: ServerSocket,
   event: string,
-  handler: OnHandler,
+  handler: OnHandler<any>,
 ) {
   socket.on(event, (payload: unknown) =>
     handler(socket, payload, getRoomOfSocket(socket) as string),
