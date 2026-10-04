@@ -1,4 +1,7 @@
 model User {
     id String @id
+    username String
+    salt String
+    password String
     mmr Int @default(0)
 }
