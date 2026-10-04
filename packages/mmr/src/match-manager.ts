@@ -5,15 +5,24 @@ const MatchListeners = {
   "queue:join": z.null(),
   "match:cancel": z.null(),
   "match:ready": z.null(),
+
+  "match:connected": z.null(),
 } as const satisfies WebSocketCallbacks;
 
 const MatchEmitters = {
   "match:found": z.null(),
   "match:cancel": z.null(),
   "match:start": z.null(),
+
+  "match:connected": z.boolean(),
 } as const satisfies WebSocketCallbacks;
 
 export const ctx = new WebSocketCtx(MatchListeners, MatchEmitters);
+
+//health check
+ctx.on("match:connected", (socket) => {
+  ctx.emit("match:connected", true, socket.id);
+});
 
 ctx.on("queue:join", (socket) => {
   if (socket.data.lobbyId) return;
