@@ -1,0 +1,15 @@
+{
+  "tasks": {},
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "prisma": "npm:prisma@8.0.0-rc.19",
+    "zod": "npm:zod@^4.6.5",
+
+    "@packages/websockets": "../websockets/index.ts"
+  },
+  "nodeModulesDir": "auto",
+  "allowScripts": {
+    "allow": [],
+    "deny": ["npm:esbuild@0.28.2", "npm:workerd@1.20260901.1"]
+  }
+}
