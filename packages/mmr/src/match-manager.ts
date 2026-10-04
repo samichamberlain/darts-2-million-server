@@ -1,13 +1,17 @@
-import { WebSocketCtx, type WebSocketCallbacks } from "@packages/websockets";
+import {
+  WebSocketCtx,
+  type Emitters,
+  type Listeners,
+} from "@packages/websockets";
 import z from "zod";
 
 const MatchListeners = {
-  "queue:join": z.null(),
-  "match:cancel": z.null(),
-  "match:ready": z.null(),
+  "queue:join": { req: z.null(), res: z.void() },
+  "match:cancel": { req: z.null(), res: z.boolean() },
+  "match:ready": { req: z.null(), res: z.boolean() },
 
-  "match:connected": z.null(),
-} as const satisfies WebSocketCallbacks;
+  "match:connected": { req: z.null(), res: z.boolean() },
+} as const satisfies Listeners;
 
 const MatchEmitters = {
   "match:found": z.null(),
@@ -15,18 +19,16 @@ const MatchEmitters = {
   "match:start": z.null(),
 
   "match:connected": z.boolean(),
-} as const satisfies WebSocketCallbacks;
+} as const satisfies Emitters;
 
 export const ctx = new WebSocketCtx(MatchListeners, MatchEmitters);
 
 //health check
-ctx.on("match:connected", (socket) => {
-  ctx.emit("match:connected", true, socket.id);
+ctx.on("match:connected", () => {
+  return true;
 });
 
 ctx.on("queue:join", (socket) => {
-  if (socket.data.lobbyId) return;
-
   ctx.roomQueue(socket);
 
   const lobbyId = socket.data.lobbyId;
@@ -37,21 +39,25 @@ ctx.on("queue:join", (socket) => {
 
 ctx.on("match:ready", (socket) => {
   const lobbyId = socket.data.lobbyId;
-  if (!lobbyId || !ctx.isLobbyFull(socket)) return;
+  if (!lobbyId || !ctx.isLobbyFull(socket)) return false;
 
   socket.data.isReady = true;
 
   //wveryone in the lobby is ready
   if (ctx.allClientsReady(lobbyId)) ctx.emit("match:start", null, lobbyId);
+
+  return true;
 });
 
 ctx.on("match:cancel", (socket) => {
   const lobbyId = socket.data.lobbyId;
-  if (!lobbyId) return;
+  if (!lobbyId) return false;
 
   // Notify everyonethen empty the lobby
   ctx.emit("match:cancel", null, lobbyId);
   for (const member of [...(ctx.clientsInLobby(lobbyId) ?? [])]) {
     ctx.leaveLobby(member);
   }
+
+  return true;
 });

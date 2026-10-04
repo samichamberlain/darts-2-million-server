@@ -1,29 +1,33 @@
 //TODO
-import { WebSocketCtx, type WebSocketCallbacks } from "@packages/websockets";
+import {
+  WebSocketCtx,
+  type Listeners,
+  type Emitters,
+} from "@packages/websockets";
 import z from "zod";
 
 const MMRListeners = {
-  login: z.object({
-    username: z.string(),
-    password: z.string(),
-  }),
+  login: {
+    req: z.object({
+      username: z.string(),
+      password: z.string(),
+    }),
+    res: z.boolean(),
+  },
 
-  "opponent:get": z.null(),
-} as const satisfies WebSocketCallbacks;
+  "opponent:get": {
+    res: z.string(),
+  },
+} as const satisfies Listeners;
 
-const MMREmitters = {
-  login: z.boolean(),
-  "opponent:get": z.string(),
-} as const satisfies WebSocketCallbacks;
+export const ctx = new WebSocketCtx(MMRListeners);
 
-export const ctx = new WebSocketCtx(MMRListeners, MMREmitters);
-
-ctx.on("login", (socket, _args) => {
+ctx.on("login", (_socket, _args) => {
   //TODO
-  ctx.emit("login", true, socket.id);
+  return true;
 });
 
-ctx.on("opponent:get", (socket) => {
+ctx.on("opponent:get", (_socket) => {
   //TODO
-  ctx.emit("opponent:get", "poopy", socket.id);
+  return "poopy";
 });

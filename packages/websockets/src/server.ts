@@ -83,27 +83,41 @@ instance.on("connection", (socket) => {
     socketLeaveLobby(socket as ServerSocket);
   });
 });
+type Listener = { req?: z.ZodType; res?: z.ZodType };
 
-export type WebSocketCallbacks = Record<string, z.ZodType>;
+export type Emitters = Record<string, z.ZodType>;
+export type Listeners = Record<string, Listener>;
 
 export class WebSocketCtx<
   //Types must be an object of keys + payload type. Emit and on typings are separate.
-  TListen,
-  TEmit,
+  TListen extends Listeners,
+  TEmit extends Emitters,
 > {
   public io: Server = instance;
 
   //zod schema inference for emit and on callbacks
-  constructor(_listenCallbacks: TListen, _emitCallbacks: TEmit) {}
+  constructor(
+    private listeners: TListen,
+    _emitCallbacks?: TEmit,
+  ) {}
 
   on<K extends keyof TListen & string>(
     event: K,
-    handler: OnHandler<z.infer<TListen[K]>>,
+    handler: OnHandler<
+      //request zod type
+      z.infer<TListen[K]["req"]>,
+      //resposne zod type -- void if no response is defined.
+      TListen[K]["res"] extends z.ZodType ? z.infer<TListen[K]["res"]> : void
+    >,
   ) {
+    const entry: RegistryEntry = {
+      request: this.listeners[event].req,
+      handler,
+    };
     //cache for future conns.
     onHandlerRegistry.set(event, [
       ...(onHandlerRegistry.get(event) ?? []),
-      handler,
+      entry,
     ]);
 
     // bind all sockets to the new handler
@@ -112,7 +126,7 @@ export class WebSocketCtx<
     );
 
     for (const socket of sockets) {
-      bindCallbacks(socket, event, handler);
+      bindCallbacks(socket, event, entry);
     }
 
     //curry fn
@@ -173,21 +187,50 @@ export type SocketCommandCallback<TArgs, TReturn> = {
   cb: (args: TArgs) => TReturn;
 };
 
-//on callback handling cache
-type OnHandler<TOnArgs> = (
+//listener acknowledge callback handling cache
+type OnHandler<TReq, TRes = void> = (
   socket: ServerSocket,
-  payload: TOnArgs,
+  payload: TReq,
   room: string,
-) => void | Promise<void>;
-const onHandlerRegistry = new Map<string, OnHandler<any>[]>();
+) => TRes | Promise<TRes>;
+
+type RegistryEntry = {
+  request: z.ZodType | undefined;
+  handler: OnHandler<any, any>;
+};
+
+type Ack = (res: unknown) => void;
+
+const onHandlerRegistry = new Map<string, RegistryEntry[]>();
 
 //Bind client callback handlers
 function bindCallbacks(
   socket: ServerSocket,
   event: string,
-  handler: OnHandler<any>,
+  { request, handler }: RegistryEntry,
 ) {
-  socket.on(event, (payload: unknown) =>
-    handler(socket, payload, getRoomOfSocket(socket) as string),
-  );
+  socket.on(event, async (payload: unknown, ack?: Ack) => {
+    const parsed = request
+      ? request.safeParse(payload)
+      : //Request is optional... we pass and send no data if no request is passed.
+        { success: true, data: undefined };
+
+    //validate that the correct data types are being passed through.
+    if (!parsed.success)
+      return ack?.({
+        error: "Entered invalid data for websocket callback",
+      });
+
+    try {
+      const result = await handler(
+        socket,
+        parsed.data,
+        getRoomOfSocket(socket) as string,
+      );
+      ack?.(result);
+    } catch (err) {
+      console.error(`Handler for "${event}" failed`, err);
+      ack?.({ error: "Internal error" });
+    }
+  });
 }
