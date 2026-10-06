@@ -30,4 +30,3 @@ ctx.on("shop:send", (socket, payload) => {
     ctx.emit("shop:sync", payload, cli.id);
   }
 });
-//TODO
