@@ -111,6 +111,7 @@ export class WebSocketCtx<
       TListen[K]["res"] extends z.ZodType ? z.infer<TListen[K]["res"]> : void
     >,
   ) {
+    console.log("Setting up on... " + event);
     const entry: RegistryEntry = {
       request: this.listeners[event].req,
       handler,
