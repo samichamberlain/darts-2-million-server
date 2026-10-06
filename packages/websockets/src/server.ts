@@ -38,10 +38,13 @@ function getRoomOfSocket(socket: ServerSocket): string | undefined {
 
 function socketJoinLobby(socket: ServerSocket, room: string) {
   socket.join(room);
-  const members = lobbies.get(room);
+  let members = lobbies.get(room);
 
   //set empty set to room id -- new lobby
-  if (!members) lobbies.set(room, new Set());
+  if (!members) {
+    members = new Set();
+    lobbies.set(room, members);
+  }
 
   members?.add(socket);
   socket.data.lobbyId = room;
