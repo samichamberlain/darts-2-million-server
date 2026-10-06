@@ -1,12 +1,8 @@
 //TODO
-import {
-  WebSocketCtx,
-  type Listeners,
-  type Emitters,
-} from "@packages/websockets";
+import { Emitters, WebSocketCtx, type Listeners } from "@packages/websockets";
 import z from "zod";
-
-const MMRListeners = {
+import { mmrContext } from "../../mmr/index.ts";
+const AuthListeners = {
   login: {
     req: z.object({
       username: z.string(),
@@ -14,20 +10,16 @@ const MMRListeners = {
     }),
     res: z.boolean(),
   },
-
-  "opponent:get": {
-    res: z.string(),
-  },
 } as const satisfies Listeners;
 
-export const ctx = new WebSocketCtx(MMRListeners);
+const AuthEmitters = {
+  "opponent:get": z.string(),
+} as const satisfies Emitters;
+
+export const ctx = new WebSocketCtx(AuthListeners, AuthEmitters);
 
 ctx.on("login", (_socket, _args) => {
   //TODO
+  mmrContext.emit("score:get", -1);
   return true;
-});
-
-ctx.on("opponent:get", (_socket) => {
-  //TODO
-  return "poopy";
 });

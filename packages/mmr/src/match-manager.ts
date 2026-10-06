@@ -5,6 +5,8 @@ import {
 } from "@packages/websockets";
 import z from "zod";
 
+import { authContext } from "../../auth/index.ts";
+
 const MatchListeners = {
   "queue:join": { req: z.null(), res: z.void() },
   "match:cancel": { req: z.null(), res: z.boolean() },
@@ -34,6 +36,7 @@ ctx.on("queue:join", (socket) => {
   const lobbyId = socket.data.lobbyId;
   if (lobbyId && ctx.isLobbyFull(socket)) {
     ctx.emit("match:found", null, lobbyId);
+    authContext.emit("opponent:get", "poopy"); //TODO
   }
 });
 

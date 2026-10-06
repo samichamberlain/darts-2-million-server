@@ -79,7 +79,6 @@ instance.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${socket.id}`);
-    const id = getRoomOfSocket(socket as ServerSocket);
     socketLeaveLobby(socket as ServerSocket);
   });
 });
