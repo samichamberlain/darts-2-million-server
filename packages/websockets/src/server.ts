@@ -70,9 +70,7 @@ function getRoomById(roomId: string) {
 
 instance.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
-
-  //Test -- remove later
-  socket.emit("connected");
+  console.log("registered events:", [...onHandlerRegistry.keys()]);
 
   //apply handlers to the socket
   for (const [event, handlers] of onHandlerRegistry) {
