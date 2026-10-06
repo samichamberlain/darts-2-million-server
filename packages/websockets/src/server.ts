@@ -15,6 +15,7 @@ let lobbyIter: number = 0;
 const MAX_PLAYERS_PER_ROOM: number = 2;
 
 export const instance: Server = new Server({
+  path: "/darts-2-million/",
   cors: {
     origin: "*", //TODO: change this to itch's domain once we ahve that set up correctly.
   },
