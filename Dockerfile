@@ -11,6 +11,5 @@ RUN deno install
 COPY . .
 RUN deno cache main.ts
 
-USER deno
 
-CMD ["run", "-A", "--env-file", "main.ts"]
+CMD ["run", "-A", "main.ts"]
