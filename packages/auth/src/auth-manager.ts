@@ -16,6 +16,8 @@ const AuthEmitters = {
   "opponent:get": z.string(),
 } as const satisfies Emitters;
 
+console.log("Loading auth listener...");
+
 export const ctx = new WebSocketCtx(AuthListeners, AuthEmitters);
 
 ctx.on("login", (_socket, _args) => {
