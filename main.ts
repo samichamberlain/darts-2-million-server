@@ -7,8 +7,6 @@ const PORT = Number(Deno.env.get("PORT"));
 
 const handler = io.handler();
 
-console.log(Deno.env.get("WEBSOCKET_PATH"));
-
 //serve websockets to client -- must be on HTTP1.1 / ws://
 Deno.serve({ port: PORT }, (req, info) => {
   return handler(req, {
