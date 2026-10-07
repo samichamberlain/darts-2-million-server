@@ -13,4 +13,4 @@ RUN deno cache main.ts
 
 USER deno
 
-CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "main.ts"]
+CMD ["deno", "task", "dev"]
