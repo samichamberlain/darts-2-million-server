@@ -13,4 +13,4 @@ RUN deno cache main.ts
 
 USER deno
 
-CMD ["deno" "run", "-A", "--env-file", "main.ts"]
+CMD ["run", "-A", "--env-file", "main.ts"]
