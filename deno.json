@@ -1,7 +1,7 @@
 {
   "tasks": {
     "dev": "deno run -A --env=.env --watch main.ts",
-    "prod": "deno run -A --env=.prod.env --watch main.ts",
+    "prod": "deno run -A --watch main.ts",
     "db:push": "deno task --cwd=packages/db db:push",
     "db:push:prod": "deno task --cwd=packages/db db:push:prod",
     "db:generate": "deno task --cwd=packages/db db:generate"
