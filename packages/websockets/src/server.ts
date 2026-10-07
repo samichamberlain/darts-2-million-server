@@ -14,10 +14,8 @@ let lobbyIter: number = 0;
 
 const MAX_PLAYERS_PER_ROOM: number = 2;
 
-console.log(Deno.env.get("WEBSOCKET_PATH"));
-
 export const instance: Server = new Server({
-  path: "/darts-2-million/",
+  path: Deno.env.get("WEBSOCKET_PATH"),
   cors: {
     origin: "*", //TODO: change this to itch's domain once we ahve that set up correctly.
   },
