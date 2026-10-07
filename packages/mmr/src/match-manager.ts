@@ -34,6 +34,7 @@ ctx.on("queue:join", (socket) => {
   ctx.roomQueue(socket);
 
   const lobbyId = socket.data.lobbyId;
+  console.log(ctx.isLobbyFull(socket));
   if (lobbyId && ctx.isLobbyFull(socket)) {
     ctx.emit("match:found", null, lobbyId);
     authContext.emit("opponent:get", "poopy"); //TODO

@@ -15,7 +15,7 @@ let lobbyIter: number = 0;
 const MAX_PLAYERS_PER_ROOM: number = 2;
 
 export const instance: Server = new Server({
-  path: "/darts-2-million/",
+  path: Deno.env.get("WEBSOCKET_PATH"),
   cors: {
     origin: "*", //TODO: change this to itch's domain once we ahve that set up correctly.
   },
@@ -70,7 +70,6 @@ function getRoomById(roomId: string) {
 
 instance.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
-  console.log("registered events:", [...onHandlerRegistry.keys()]);
 
   //apply handlers to the socket
   for (const [event, handlers] of onHandlerRegistry) {
@@ -111,7 +110,6 @@ export class WebSocketCtx<
       TListen[K]["res"] extends z.ZodType ? z.infer<TListen[K]["res"]> : void
     >,
   ) {
-    console.log("Setting up on... " + event);
     const entry: RegistryEntry = {
       request: this.listeners[event].req,
       handler,

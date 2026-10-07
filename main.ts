@@ -1,6 +1,9 @@
 import { io } from "@packages/websockets";
-import "@packages/mmr";
-import "@packages/auth";
+import {
+  matchContext as _matchContext,
+  mmrContext as _mmrContext,
+} from "@packages/mmr";
+import { authContext as _authContext } from "@packages/auth";
 
 //env
 const PORT = Number(Deno.env.get("PORT"));
