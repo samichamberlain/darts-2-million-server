@@ -13,4 +13,4 @@ RUN deno cache main.ts
 
 USER deno
 
-CMD ["deno", "task", "prod"]
+CMD ["run", "-A", "main.ts"]
