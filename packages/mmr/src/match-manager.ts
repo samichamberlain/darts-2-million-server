@@ -8,11 +8,11 @@ import z from "zod";
 import { authContext } from "../../auth/index.ts";
 
 const MatchListeners = {
-  "queue:join": { req: z.null(), res: z.void() },
-  "match:cancel": { req: z.null(), res: z.boolean() },
-  "match:ready": { req: z.null(), res: z.boolean() },
+  "queue:join": { res: z.void() },
+  "match:cancel": { res: z.boolean() },
+  "match:ready": { res: z.boolean() },
 
-  "match:connected": { req: z.null(), res: z.boolean() },
+  "match:connected": { res: z.boolean() },
 } as const satisfies Listeners;
 
 const MatchEmitters = {
@@ -42,6 +42,7 @@ ctx.on("queue:join", (socket) => {
 });
 
 ctx.on("match:ready", (socket) => {
+  console.log("match ready...");
   const lobbyId = socket.data.lobbyId;
   if (!lobbyId || !ctx.isLobbyFull(socket)) return false;
 

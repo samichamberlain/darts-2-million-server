@@ -37,6 +37,7 @@ function getRoomOfSocket(socket: ServerSocket): string | undefined {
 }
 
 function socketJoinLobby(socket: ServerSocket, room: string) {
+  console.log(`ROOM: `, room);
   socket.join(room);
   let members = lobbies.get(room);
 
@@ -135,6 +136,7 @@ export class WebSocketCtx<
 
   isLobbyFull(socket: ServerSocket) {
     const roomId = getRoomOfSocket(socket);
+
     return (
       !!roomId && (getRoomById(roomId)?.size ?? 0) === MAX_PLAYERS_PER_ROOM
     );
@@ -216,10 +218,13 @@ function bindCallbacks(
         { success: true, data: undefined };
 
     //validate that the correct data types are being passed through.
-    if (!parsed.success)
+    if (!parsed.success) {
+      console.error(`Failed to validate zod input for ${event}: `, payload);
+
       return ack?.({
         error: "Entered invalid data for websocket callback",
       });
+    }
 
     try {
       const result = await handler(
