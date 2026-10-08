@@ -31,38 +31,35 @@ ctx.on("match:connected", () => {
 });
 
 ctx.on("queue:join", (socket) => {
-  ctx.roomQueue(socket);
+  ctx.joinQueue(socket);
+});
 
-  const lobbyId = socket.data.lobbyId;
-  console.log(ctx.isLobbyFull(socket));
-  if (lobbyId && ctx.isLobbyFull(socket)) {
-    ctx.emit("match:found", null, lobbyId);
-    authContext.emit("opponent:get", "poopy"); //TODO
-  }
+ctx.onLobbyCreate((lobbyId) => {
+  ctx.emit("match:found", null, lobbyId);
+  authContext.emit("opponent:get", "poopy"); //TODO
+});
+
+ctx.onLobbyDelete((lobbyId) => {
+  ctx.emit("match:cancel", null, lobbyId);
+});
+
+ctx.onLobbyReady((lobbyId) => {
+  ctx.emit("match:start", null, lobbyId);
 });
 
 ctx.on("match:ready", (socket) => {
-  console.log("match ready...");
-  const lobbyId = socket.data.lobbyId;
-  if (!lobbyId || !ctx.isLobbyFull(socket)) return false;
-
-  socket.data.isReady = true;
-
-  //wveryone in the lobby is ready
-  if (ctx.allClientsReady(lobbyId)) ctx.emit("match:start", null, lobbyId);
-
+  ctx.readyClient(socket);
   return true;
 });
 
-ctx.on("match:cancel", (socket) => {
-  const lobbyId = socket.data.lobbyId;
-  if (!lobbyId) return false;
-
-  // Notify everyonethen empty the lobby
-  ctx.emit("match:cancel", null, lobbyId);
-  for (const member of [...(ctx.clientsInLobby(lobbyId) ?? [])]) {
-    ctx.leaveLobby(member);
+ctx.on("match:cancel", (socket, _payload, lobbyId) => {
+  if (!lobbyId) {
+    ctx.leaveQueue(socket);
+    return true;
   }
+
+  ctx.leaveLobby(socket);
+  ctx.emit("match:cancel", null, lobbyId);
 
   return true;
 });

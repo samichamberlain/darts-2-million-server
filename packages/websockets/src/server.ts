@@ -10,9 +10,21 @@ interface SocketMetadata {
 // deno-lint-ignore no-explicit-any
 type ServerSocket = Socket<any, any, any, SocketMetadata>;
 
+//Lobbies + Queue
+let queue: ServerSocket[] = [];
 let lobbyIter: number = 0;
+const MAX_PLAYERS_PER_LOBBY: number = 2;
 
-const MAX_PLAYERS_PER_ROOM: number = 2;
+const lobbies: Map<string, Set<ServerSocket>> = new Map<
+  string,
+  Set<ServerSocket>
+>();
+
+function emitLobbyListeners(listeners: LobbyEvent[], lobbyId: string) {
+  for (const listener of listeners) {
+    listener(lobbyId);
+  }
+}
 
 export const instance: Server = new Server({
   path: Deno.env.get("WEBSOCKET_PATH"),
@@ -20,11 +32,6 @@ export const instance: Server = new Server({
     origin: "*", //TODO: change this to itch's domain once we ahve that set up correctly.
   },
 });
-
-const lobbies: Map<string, Set<ServerSocket>> = new Map<
-  string,
-  Set<ServerSocket>
->();
 
 function generateLobbyCode(id: number) {
   const code = id.toString(36).padStart(5, "0").toUpperCase();
@@ -36,58 +43,10 @@ function getRoomOfSocket(socket: ServerSocket): string | undefined {
   return socket.data.lobbyId;
 }
 
-function socketJoinLobby(socket: ServerSocket, room: string) {
-  console.log(`ROOM: `, room);
-  socket.join(room);
-  let members = lobbies.get(room);
-
-  //set empty set to room id -- new lobby
-  if (!members) {
-    members = new Set();
-    lobbies.set(room, members);
-  }
-
-  members?.add(socket);
-  socket.data.lobbyId = room;
-}
-
-function socketLeaveLobby(socket: ServerSocket) {
-  const lobbyId = socket.data.lobbyId;
-
-  if (!lobbyId) return;
-
-  socket.leave(lobbyId);
-  socket.data.lobbyId = undefined;
-
-  const members = lobbies.get(lobbyId);
-  members?.delete(socket);
-
-  if (members?.size === 0) lobbies.delete(lobbyId);
-}
-
-function getRoomById(roomId: string) {
-  return instance.of("/").adapter.socketRooms(roomId);
-}
-
-instance.on("connection", (socket) => {
-  console.log(`Client connected: ${socket.id}`);
-
-  //apply handlers to the socket
-  for (const [event, handlers] of onHandlerRegistry) {
-    for (const handler of handlers) {
-      bindCallbacks(socket as ServerSocket, event, handler);
-    }
-  }
-
-  socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
-    socketLeaveLobby(socket as ServerSocket);
-  });
-});
-type Listener = { req?: z.ZodType; res?: z.ZodType };
-
 export type Emitters = Record<string, z.ZodType>;
-export type Listeners = Record<string, Listener>;
+export type Listeners = Record<string, { req?: z.ZodType; res?: z.ZodType }>;
+
+type LobbyEvent = (lobbyId: string) => void;
 
 export class WebSocketCtx<
   //Types must be an object of keys + payload type. Emit and on typings are separate.
@@ -96,11 +55,61 @@ export class WebSocketCtx<
 > {
   public io: Server = instance;
 
+  private lobbyCreateListeners: LobbyEvent[] = [];
+  private lobbyDeleteListeners: LobbyEvent[] = [];
+  private lobbyReadyListeners: LobbyEvent[] = [];
+
+  private socketLeaveQueue(socket: ServerSocket) {
+    if (queue.includes(socket)) {
+      const idx = queue.indexOf(socket);
+      queue.splice(idx, 1);
+
+      console.log(`${socket.id} left the queue. Queue length: ${queue.length}`);
+    }
+  }
+
+  private socketLeaveLobby(socket: ServerSocket) {
+    const lobbyId = socket.data.lobbyId;
+
+    if (!lobbyId) return;
+
+    socket.leave(lobbyId);
+    socket.data.lobbyId = undefined;
+
+    const members = lobbies.get(lobbyId);
+    members?.delete(socket);
+
+    if (members?.size === 0) {
+      lobbies.delete(lobbyId);
+      emitLobbyListeners(this.lobbyDeleteListeners, lobbyId);
+      console.log(`Lobby ${lobbyId} deleted.`);
+    }
+  }
+
+  private onHandlerRegistry = new Map<string, RegistryEntry[]>();
+
   //zod schema inference for emit and on callbacks
   constructor(
     private listeners: TListen,
     _emitCallbacks?: TEmit,
-  ) {}
+  ) {
+    instance.on("connection", (socket) => {
+      console.log(`Client connected: ${socket.id}`);
+
+      //apply handlers to the socket
+      for (const [event, handlers] of this.onHandlerRegistry) {
+        for (const handler of handlers) {
+          bindCallbacks(socket as ServerSocket, event, handler);
+        }
+      }
+
+      socket.on("disconnect", () => {
+        console.log(`Client disconnected: ${socket.id}`);
+        this.socketLeaveQueue(socket as ServerSocket);
+        this.socketLeaveLobby(socket as ServerSocket);
+      });
+    });
+  }
 
   on<K extends keyof TListen & string>(
     event: K,
@@ -116,8 +125,8 @@ export class WebSocketCtx<
       handler,
     };
     //cache for future conns.
-    onHandlerRegistry.set(event, [
-      ...(onHandlerRegistry.get(event) ?? []),
+    this.onHandlerRegistry.set(event, [
+      ...(this.onHandlerRegistry.get(event) ?? []),
       entry,
     ]);
 
@@ -134,42 +143,91 @@ export class WebSocketCtx<
     return this;
   }
 
-  isLobbyFull(socket: ServerSocket) {
-    const roomId = getRoomOfSocket(socket);
+  joinQueue(socket: ServerSocket) {
+    if (socket.data.lobbyId) {
+      console.log("Socket is already in lobby... Aborting.");
+      return;
+    }
 
-    return (
-      !!roomId && (getRoomById(roomId)?.size ?? 0) === MAX_PLAYERS_PER_ROOM
+    queue.push(socket);
+
+    //Get rid of the chance of having a duplicate queue entry, or any that are null/undefined.
+    queue = Array.from(
+      new Set(queue.filter((q) => q !== undefined && q !== null)),
     );
+
+    console.log(
+      `[Match] :: ${socket.id} joined the matchmaking queue. Queue length: ${queue.length}`,
+    );
+
+    if (queue.length >= MAX_PLAYERS_PER_LOBBY) {
+      const lobbyId = generateLobbyCode(lobbyIter);
+
+      console.log(`Creating lobby ${lobbyId}.`);
+      const players_in_lobby: Set<ServerSocket> = new Set<ServerSocket>();
+
+      for (let i = 0; i < MAX_PLAYERS_PER_LOBBY; i++) {
+        const socket = queue.shift() as ServerSocket;
+        socket.data.lobbyId = lobbyId;
+        socket.data.isReady = false;
+        socket?.join(lobbyId);
+        players_in_lobby.add(socket);
+      }
+
+      console.log(
+        `Lobby ${lobbyId} created. Players in lobby: ${players_in_lobby}`,
+      );
+
+      lobbies.set(lobbyId, players_in_lobby);
+      emitLobbyListeners(this.lobbyCreateListeners, lobbyId);
+    }
   }
 
-  roomQueue(socket: ServerSocket) {
-    const open = [...lobbies].find(
-      ([_id, lobby]) => lobby.size < MAX_PLAYERS_PER_ROOM,
-    );
-
-    const code = open?.[0] ?? this.createLobby();
-    socketJoinLobby(socket, code);
-
-    return code;
+  leaveQueue(socket: ServerSocket) {
+    this.socketLeaveQueue(socket);
   }
 
-  createLobby() {
-    return generateLobbyCode(lobbyIter);
+  onLobbyCreate(callback: (lobbyId: string) => void) {
+    this.lobbyCreateListeners.push(callback);
+  }
+
+  onLobbyDelete(callback: (lobbyId: string) => void) {
+    this.lobbyDeleteListeners.push(callback);
+  }
+
+  onLobbyReady(callback: (lobbyId: string) => void) {
+    this.lobbyReadyListeners.push(callback);
   }
 
   leaveLobby(socket: ServerSocket) {
-    socketLeaveLobby(socket);
+    this.socketLeaveLobby(socket);
+    socket.data.isReady = false;
   }
 
   clientsInLobby(lobbyId: string) {
     return lobbies.get(lobbyId);
   }
 
-  allClientsReady(lobbyId: string) {
-    const sockets = lobbies.get(lobbyId);
-    if (!sockets) return false;
+  lobbyOfClient(socket: ServerSocket) {
+    const lobbyIds = socket.rooms;
+  }
 
-    return [...sockets].every((s) => s.data.isReady);
+  readyClient(socket: ServerSocket) {
+    const lobby = lobbies.get(socket.data.lobbyId ?? "");
+    if (!lobby) {
+      console.error("Cannot ready client. They are not in a lobby.");
+      return;
+    }
+
+    socket.data.isReady = true;
+
+    const allReady = [...lobby].every((s) => s.data.isReady);
+
+    if (allReady)
+      emitLobbyListeners(
+        this.lobbyReadyListeners,
+        socket.data.lobbyId as string,
+      );
   }
 
   emit<K extends keyof TEmit>(
@@ -202,8 +260,6 @@ type RegistryEntry = {
 };
 
 type Ack = (res: unknown) => void;
-
-const onHandlerRegistry = new Map<string, RegistryEntry[]>();
 
 //Bind client callback handlers
 function bindCallbacks(
