@@ -21,6 +21,6 @@ export const ctx = new WebSocketCtx(AuthListeners, AuthEmitters);
 ctx.on("login", (_socket, _args) => {
   console.log("logging in...", _socket.id);
   //TODO
-  mmrContext.emit("score:get", -1);
+  mmrContext.emit("score:get", 0);
   return true;
 });
