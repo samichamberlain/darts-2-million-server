@@ -96,5 +96,5 @@ export function calculateMmr(
 function mmr(mmrA: number, mmrB: number, winner: boolean) {
   const E = 1 / 1 + Math.pow(10, (mmrB - mmrA) / MMR_PROBABILITY_FACTOR);
   const S = winner ? 1 : 0;
-  return Math.min(Math.max(mmrA + MAX_MMR_GAIN * (S - E), 0), Infinity);
+  return Math.max(mmrA + MAX_MMR_GAIN * (S - E), 0);
 }
