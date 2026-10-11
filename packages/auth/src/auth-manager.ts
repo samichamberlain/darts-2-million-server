@@ -27,14 +27,17 @@ ctx.on("login", async (_socket, args) => {
   const account = await runTransaction(async (tx) => {
     const user = await tx.user.findFirst({
       where: {
-        username: args.username,
+        username: {
+          equals: args.username,
+          mode: "insensitive",
+        },
       },
     });
 
     return user;
   });
 
-  //validate password if the user's account already exists
+  //validate password if the user's account already exists + emit mmr
   if (account) {
     mmrContext.emit("score:get", account.mmr);
     return account.password === args.password;
@@ -50,7 +53,6 @@ ctx.on("login", async (_socket, args) => {
       });
     });
   }
-
   mmrContext.emit("score:get", 0);
   return true;
 });
