@@ -10,7 +10,7 @@ import z from "zod";
 import { runTransaction } from "@packages/db";
 
 const MMR_PROBABILITY_FACTOR: number = 400;
-const MAX_MMR_GAIN = 32;
+const MAX_MMR_GAIN = 150;
 
 const MMREmitters = {
   "score:get": z.number(),
