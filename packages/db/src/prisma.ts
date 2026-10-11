@@ -7,28 +7,22 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
-// Example transaction schema
-// runTransaction((tx) => {
-//     return tx.user.create({
-//         data: {
-//             id: "3043420i9",
-//             mmr: 1
-//         }
-//     })
-// })
+//expose prisma transaction typing to other packages
+export type TransactionClient = Omit<
+  typeof prisma,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends"
+>;
 
 export async function runTransaction<T>(
-  op: (tx: Prisma.TransactionClient) => Promise<T>,
+  op: (tx: TransactionClient) => Promise<T>,
   options?: {
     maxWait?: number;
     timeout?: number;
     isolationLevel?: Prisma.TransactionIsolationLevel;
   },
-) {
+): Promise<T | undefined> {
   try {
-    return await prisma.$transaction(async (tx) => {
-      return await op(tx);
-    }, options);
+    return await prisma.$transaction(op, options);
   } catch (err) {
     console.error(
       `[Transaction Manager] :: Transaction failed -- Rolled back: ${err}`,

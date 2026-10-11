@@ -7,8 +7,9 @@
     "db:generate": "deno task --cwd=packages/db db:generate"
   },
   "imports": {
-    "@prisma/adapter-pg": "npm:@prisma/adapter-pg@^7.10.0",
     "@std/assert": "jsr:@std/assert@1",
+    "@prisma/client": "npm:@prisma/client@<same version as db>",
+    "@prisma/adapter-pg": "npm:@prisma/adapter-pg@<same version as db>",
     "prisma": "npm:prisma@8.0.0-rc.19",
     "zod": "npm:zod@^4.6.5",
 

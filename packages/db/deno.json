@@ -16,6 +16,11 @@
   "nodeModulesDir": "auto",
   "allowScripts": {
     "allow": [],
-    "deny": ["npm:@prisma/engines@7.10.0", "npm:esbuild@0.28.2", "npm:prisma@7.10.0", "npm:workerd@1.20260901.1"]
+    "deny": [
+      "npm:@prisma/engines@7.10.0",
+      "npm:esbuild@0.28.2",
+      "npm:prisma@7.10.0",
+      "npm:workerd@1.20260901.1"
+    ]
   }
 }

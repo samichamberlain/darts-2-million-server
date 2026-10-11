@@ -2,10 +2,9 @@
   "tasks": {},
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
-    "prisma": "npm:prisma@8.0.0-rc.19",
     "zod": "npm:zod@^4.6.5",
-
-    "@packages/websockets": "../websockets/index.ts"
+    "@packages/websockets": "../websockets/index.ts",
+    "@packages/db": "../db/index.ts"
   },
   "nodeModulesDir": "auto",
   "allowScripts": {
