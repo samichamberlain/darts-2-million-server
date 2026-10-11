@@ -5,7 +5,8 @@
     "prisma": "npm:prisma@8.0.0-rc.19",
     "zod": "npm:zod@^4.6.5",
 
-    "@packages/websockets": "../websockets/index.ts"
+    "@packages/websockets": "../websockets/index.ts",
+    "@packages/mmr": "../mmr/index.ts"
   },
   "nodeModulesDir": "auto",
   "allowScripts": {

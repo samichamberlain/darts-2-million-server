@@ -2,13 +2,15 @@ import { Server, Socket } from "socket_io";
 import z from "zod";
 
 interface SocketMetadata {
+  username: string;
+  mmr: number;
   lobbyId?: string;
   isReady: boolean;
 }
 
 //Attach lobby id to socket for ease of access.
 // deno-lint-ignore no-explicit-any
-type ServerSocket = Socket<any, any, any, SocketMetadata>;
+export type ServerSocket = Socket<any, any, any, SocketMetadata>;
 
 //Lobbies + Queue
 let queue: ServerSocket[] = [];
@@ -208,8 +210,9 @@ export class WebSocketCtx<
     return lobbies.get(lobbyId);
   }
 
-  lobbyOfClient(socket: ServerSocket) {
-    const lobbyIds = socket.rooms;
+  getOpponents(socket: ServerSocket, lobbyId: string) {
+    const sockets = this.clientsInLobby(lobbyId);
+    return sockets ? [...sockets].filter((s) => s.id !== socket.id) : [];
   }
 
   readyClient(socket: ServerSocket) {

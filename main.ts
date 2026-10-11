@@ -1,7 +1,7 @@
 import { io } from "@packages/websockets";
 import "@packages/mmr";
 import "@packages/auth";
-import "@packages/shop";
+import "@packages/state";
 
 //env
 const PORT = Number(Deno.env.get("PORT"));

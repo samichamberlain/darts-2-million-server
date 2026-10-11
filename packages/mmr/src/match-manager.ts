@@ -21,6 +21,7 @@ const MatchEmitters = {
   "match:start": z.null(),
 
   "match:connected": z.boolean(),
+  "match:over": z.object({ winner: z.string() }),
 } as const satisfies Emitters;
 
 export const ctx = new WebSocketCtx(MatchListeners, MatchEmitters);
@@ -36,7 +37,27 @@ ctx.on("queue:join", (socket) => {
 
 ctx.onLobbyCreate((lobbyId) => {
   ctx.emit("match:found", null, lobbyId);
-  authContext.emit("opponent:get", "poopy"); //TODO
+
+  //get other player in lobby
+  const players = ctx.clientsInLobby(lobbyId);
+
+  if (players) {
+    console.log([...players]?.map((p) => p.data));
+
+    players.forEach((p) => {
+      const lobby = p.id;
+
+      const other = [...players].find(
+        (px) => px.data.username != p.data.username,
+      );
+
+      authContext.emit(
+        "opponent:get",
+        other?.data.username ?? "Paul Fart",
+        lobby,
+      );
+    });
+  }
 });
 
 ctx.onLobbyDelete((lobbyId) => {

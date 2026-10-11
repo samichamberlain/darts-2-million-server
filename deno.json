@@ -17,7 +17,7 @@
     "@packages/websockets": "./packages/websockets/index.ts",
     "@packages/mmr": "./packages/mmr/index.ts",
     "@packages/auth": "./packages/auth/index.ts",
-    "@packages/shop": "./packages/shop/index.ts"
+    "@packages/state": "./packages/state/index.ts"
   },
   "nodeModulesDir": "auto",
   "allowScripts": {

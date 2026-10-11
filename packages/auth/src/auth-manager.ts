@@ -20,11 +20,11 @@ const AuthEmitters = {
 
 export const ctx = new WebSocketCtx(AuthListeners, AuthEmitters);
 
-ctx.on("login", async (_socket, args) => {
-  console.log("logging in...", _socket.id);
+ctx.on("login", async (socket, args) => {
+  console.log("logging in...", socket.id);
 
   //check if the user has an account....
-  const account = await runTransaction(async (tx) => {
+  let account = await runTransaction(async (tx) => {
     const user = await tx.user.findFirst({
       where: {
         username: {
@@ -37,6 +37,11 @@ ctx.on("login", async (_socket, args) => {
     return user;
   });
 
+  if (account) {
+    socket.data.username = account?.username;
+    socket.data.mmr = account?.mmr;
+  }
+
   //validate password if the user's account already exists + emit mmr
   if (account) {
     mmrContext.emit("score:get", account.mmr);
@@ -45,7 +50,7 @@ ctx.on("login", async (_socket, args) => {
 
   //create a new account
   else {
-    await runTransaction((tx) => {
+    account = await runTransaction((tx) => {
       return tx.user.create({
         data: {
           ...args,
@@ -53,6 +58,10 @@ ctx.on("login", async (_socket, args) => {
       });
     });
   }
+
   mmrContext.emit("score:get", 0);
+  socket.data.username = account?.username;
+  socket.data.mmr = account?.mmr;
+
   return true;
 });
