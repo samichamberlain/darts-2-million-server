@@ -36,10 +36,10 @@ ctx.on("state:send", (socket, payload, lobbyId) => {
   if (opponent) {
     if (Number(socket.data.score) <= 0) {
       console.log(`Host won! Socket ID: ${socket.id}`);
-      winSequence(socket, opponent);
+      winSequence(socket, opponent, lobbyId);
     } else if (Number(opponent.data.score) <= 0) {
       console.log(`Opponent won! Socket ID: ${opponent.id}`);
-      winSequence(opponent, socket);
+      winSequence(opponent, socket, lobbyId);
     }
   }
 

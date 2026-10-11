@@ -15,10 +15,6 @@ const defaultSocketMetadata = {
   score: 0,
 };
 
-function resetSocketMetadata(socket: ServerSocket) {
-  socket.data = { ...defaultSocketMetadata, ...socket.data };
-}
-
 //Attach lobby id to socket for ease of access.
 // deno-lint-ignore no-explicit-any
 export type ServerSocket = Socket<any, any, any, SocketMetadata>;
@@ -87,7 +83,7 @@ export class WebSocketCtx<
     if (!lobbyId) return;
 
     socket.leave(lobbyId);
-    resetSocketMetadata(socket);
+    this.resetSocketMetadata(socket);
 
     const members = lobbies.get(lobbyId);
     members?.delete(socket);
@@ -214,11 +210,15 @@ export class WebSocketCtx<
 
   leaveLobby(socket: ServerSocket) {
     this.socketLeaveLobby(socket);
-    resetSocketMetadata(socket);
+    this.resetSocketMetadata(socket);
   }
 
   clientsInLobby(lobbyId: string) {
     return lobbies.get(lobbyId);
+  }
+
+  resetSocketMetadata(socket: ServerSocket) {
+    socket.data = { ...defaultSocketMetadata, ...socket.data };
   }
 
   getOpponents(socket: ServerSocket, lobbyId: string) {

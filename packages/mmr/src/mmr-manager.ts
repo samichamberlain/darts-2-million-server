@@ -16,7 +16,11 @@ const MMREmitters = {
   "score:get": z.number(),
 } as const satisfies Emitters;
 
-export function winSequence(winner: ServerSocket, loser: ServerSocket) {
+export function winSequence(
+  winner: ServerSocket,
+  loser: ServerSocket,
+  lobbyId: string,
+) {
   const mmr = calculateMmr(winner, loser);
 
   const winnerName = winner.data.username as string;
@@ -37,6 +41,12 @@ export function winSequence(winner: ServerSocket, loser: ServerSocket) {
 
   ctx.emit("score:get", mmr[winnerName], winner.id);
   ctx.emit("score:get", mmr[loserName], loser.id);
+
+  loser.leave(lobbyId);
+  winner.leave(lobbyId);
+
+  ctx.resetSocketMetadata(loser);
+  ctx.resetSocketMetadata(winner);
 }
 
 export const ctx = new WebSocketCtx({} as Listeners, MMREmitters);
@@ -86,5 +96,5 @@ export function calculateMmr(
 function mmr(mmrA: number, mmrB: number, winner: boolean) {
   const E = 1 / 1 + Math.pow(10, (mmrB - mmrA) / MMR_PROBABILITY_FACTOR);
   const S = winner ? 1 : 0;
-  return mmrA + MAX_MMR_GAIN * (S - E);
+  return Math.min(Math.max(mmrA + MAX_MMR_GAIN * (S - E), 0), Infinity);
 }
