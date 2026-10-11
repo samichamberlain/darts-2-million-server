@@ -100,5 +100,5 @@ function mmr(mmrA: number, mmrB: number, winner: boolean) {
   const S = winner ? 1 : 0;
   const MAX_MMR_GAIN = winner ? MAX_MMR_WIN : MAX_MMR_LOSE;
 
-  return Math.max(mmrA + Math.min(MAX_MMR_GAIN * (S - E), MIN_MMR_GAIN), 0);
+  return Math.max(mmrA + Math.max(MAX_MMR_GAIN * (S - E), MIN_MMR_GAIN), 0);
 }
