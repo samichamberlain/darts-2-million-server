@@ -21,7 +21,6 @@ const MatchEmitters = {
   "match:start": z.null(),
 
   "match:connected": z.boolean(),
-  "match:over": z.object({ winner: z.string() }),
 } as const satisfies Emitters;
 
 export const ctx = new WebSocketCtx(MatchListeners, MatchEmitters);

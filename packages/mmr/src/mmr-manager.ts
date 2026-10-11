@@ -8,7 +8,6 @@ import {
 import z from "zod";
 
 import { runTransaction } from "@packages/db";
-import { ctx as matchCtx } from "./match-manager.ts";
 
 const MMR_PROBABILITY_FACTOR: number = 400;
 const MAX_MMR_GAIN = 32;
@@ -17,14 +16,7 @@ const MMREmitters = {
   "score:get": z.number(),
 } as const satisfies Emitters;
 
-export function winSequence(
-  user: ServerSocket,
-  opponent: ServerSocket,
-  win: boolean,
-) {
-  const winner = win ? user : opponent;
-  const loser = win ? opponent : user;
-
+export function winSequence(winner: ServerSocket, loser: ServerSocket) {
   const mmr = calculateMmr(winner, loser);
 
   const winnerName = winner.data.username as string;
@@ -43,13 +35,13 @@ export function winSequence(
     });
   });
 
-  //pass winner name to clients, signaling the end of a match (server authoritative)
-  matchCtx.emit("match:over", { winner: winner.data.username as string });
+  ctx.emit("score:get", mmr[winnerName], winner.id);
+  ctx.emit("score:get", mmr[loserName], loser.id);
 }
 
 export const ctx = new WebSocketCtx({} as Listeners, MMREmitters);
 
-export function checkForWin(payload: string): boolean {
+export function setClientScore(socket: ServerSocket, payload: string): void {
   const bytes = JSON.parse(payload);
   const byteArray = new Uint8Array(Object.values(bytes));
 
@@ -66,7 +58,7 @@ export function checkForWin(payload: string): boolean {
     byteArray.byteLength,
   ).getUint32(4, true);
 
-  return 1_000_000 - numDarts <= 0;
+  socket.data.score = 1_000_000 - numDarts;
 }
 
 export function calculateMmr(

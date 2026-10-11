@@ -6,6 +6,17 @@ interface SocketMetadata {
   mmr: number;
   lobbyId?: string;
   isReady: boolean;
+  score: number;
+}
+
+const defaultSocketMetadata = {
+  isReady: false,
+  lobbyId: "",
+  score: 0,
+};
+
+function resetSocketMetadata(socket: ServerSocket) {
+  socket.data = { ...defaultSocketMetadata, ...socket.data };
 }
 
 //Attach lobby id to socket for ease of access.
@@ -76,7 +87,7 @@ export class WebSocketCtx<
     if (!lobbyId) return;
 
     socket.leave(lobbyId);
-    socket.data.lobbyId = undefined;
+    resetSocketMetadata(socket);
 
     const members = lobbies.get(lobbyId);
     members?.delete(socket);
@@ -203,7 +214,7 @@ export class WebSocketCtx<
 
   leaveLobby(socket: ServerSocket) {
     this.socketLeaveLobby(socket);
-    socket.data.isReady = false;
+    resetSocketMetadata(socket);
   }
 
   clientsInLobby(lobbyId: string) {

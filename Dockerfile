@@ -9,6 +9,7 @@ RUN deno install
 
 
 COPY . .
+RUN deno run -A npm:prisma generate
 RUN deno cache main.ts
 
 

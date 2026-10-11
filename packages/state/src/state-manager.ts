@@ -3,7 +3,7 @@ import {
   type Emitters,
   type Listeners,
 } from "@packages/websockets";
-import { checkForWin, winSequence } from "@packages/mmr";
+import { setClientScore, winSequence } from "@packages/mmr";
 import z from "zod";
 
 const StateListeners = {
@@ -21,16 +21,27 @@ ctx.on("state:send", (socket, payload, lobbyId) => {
 
   const clients = ctx.clientsInLobby(lobbyId);
 
-  console.log("has client won? ", checkForWin(payload));
-  const win = checkForWin(payload);
-
-  if (win) {
-    const opponent = ctx.getOpponents(socket, lobbyId)[0];
-    winSequence(socket, opponent, true);
-    winSequence(opponent, socket, false);
+  if (!clients) {
+    console.error(
+      `[state::send] No clients to send data to for lobby ${lobbyId}`,
+    );
+    return;
   }
 
-  if (!clients) return;
+  setClientScore(socket, payload);
+  const opponent = ctx.getOpponents(socket, lobbyId)[0];
+
+  console.log(socket.data.score, opponent.data.score);
+
+  if (opponent) {
+    if (Number(socket.data.score) <= 0) {
+      console.log(`Host won! Socket ID: ${socket.id}`);
+      winSequence(socket, opponent);
+    } else if (Number(opponent.data.score) <= 0) {
+      console.log(`Opponent won! Socket ID: ${opponent.id}`);
+      winSequence(opponent, socket);
+    }
+  }
 
   for (const cli of clients) {
     if (cli.id === socket.id) continue;
