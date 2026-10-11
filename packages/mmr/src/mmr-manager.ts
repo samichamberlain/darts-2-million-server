@@ -9,9 +9,6 @@ import z from "zod";
 
 import { runTransaction } from "@packages/db";
 
-const MMR_PROBABILITY_FACTOR: number = 400;
-const MAX_MMR_GAIN = 150;
-
 const MMREmitters = {
   "score:get": z.number(),
 } as const satisfies Emitters;
@@ -93,8 +90,15 @@ export function calculateMmr(
   };
 }
 
+const MMR_PROBABILITY_FACTOR: number = 400;
+const MAX_MMR_WIN = 600;
+const MAX_MMR_LOSE = 400;
+const MIN_MMR_GAIN = 10;
+
 function mmr(mmrA: number, mmrB: number, winner: boolean) {
   const E = 1 / (1 + Math.pow(10, (mmrB - mmrA) / MMR_PROBABILITY_FACTOR));
   const S = winner ? 1 : 0;
-  return Math.max(mmrA + MAX_MMR_GAIN * (S - E), 0);
+  const MAX_MMR_GAIN = winner ? MAX_MMR_WIN : MAX_MMR_LOSE;
+
+  return Math.max(mmrA + Math.min(MAX_MMR_GAIN * (S - E), MIN_MMR_GAIN), 0);
 }

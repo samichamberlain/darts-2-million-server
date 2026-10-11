@@ -44,7 +44,7 @@ ctx.on("login", async (socket, args) => {
 
   //validate password if the user's account already exists + emit mmr
   if (account) {
-    mmrContext.emit("score:get", account.mmr);
+    mmrContext.emit("score:get", account.mmr, socket.id);
     return account.password === args.password;
   }
 
@@ -59,7 +59,7 @@ ctx.on("login", async (socket, args) => {
     });
   }
 
-  mmrContext.emit("score:get", 0);
+  mmrContext.emit("score:get", 0, socket.id);
   socket.data.username = account?.username;
   socket.data.mmr = account?.mmr;
 
