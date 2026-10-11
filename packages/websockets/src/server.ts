@@ -11,7 +11,7 @@ interface SocketMetadata {
 
 const defaultSocketMetadata = {
   isReady: false,
-  lobbyId: "",
+  lobbyId: undefined,
   score: 0,
 };
 
@@ -153,7 +153,7 @@ export class WebSocketCtx<
   }
 
   joinQueue(socket: ServerSocket) {
-    if (socket.data.lobbyId) {
+    if (socket.rooms.size > 1) {
       console.log("Socket is already in lobby... Aborting.");
       return;
     }
