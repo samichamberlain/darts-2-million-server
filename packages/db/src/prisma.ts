@@ -24,6 +24,12 @@ export async function runTransaction<T>(
   try {
     return await prisma.$transaction(op, options);
   } catch (err) {
+    if (err instanceof AggregateError) {
+      for (const e of err.errors) {
+        console.error(e + "\n");
+      }
+    }
+
     console.error(
       `[Transaction Manager] :: Transaction failed -- Rolled back: ${err}`,
     );
