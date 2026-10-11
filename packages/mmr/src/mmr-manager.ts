@@ -90,9 +90,9 @@ export function calculateMmr(
   };
 }
 
-const MMR_PROBABILITY_FACTOR: number = 400;
+const MMR_PROBABILITY_FACTOR: number = 10;
 const MAX_MMR_WIN = 600;
-const MAX_MMR_LOSE = 400;
+const MAX_MMR_LOSE = 200;
 const MIN_MMR_GAIN = 10;
 
 function mmr(mmrA: number, mmrB: number, winner: boolean) {
