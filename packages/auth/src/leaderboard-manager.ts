@@ -13,16 +13,13 @@ const LeaderboardListeners = {
 } as const satisfies Listeners;
 
 const LeaderboardEmitters = {
-  "leaderboard:sync": z.object({
-    index: z.int(),
-    name: z.string(),
-    mmr: z.number(),
-  }),
+  "leaderboard:sync": z.tuple([z.int(), z.string(), z.number()]),
 } as const satisfies Emitters;
 
 export const ctx = new WebSocketCtx(LeaderboardListeners, LeaderboardEmitters);
 
 ctx.on("leaderboard:request", async (socket, args) => {
+  console.log("requesting leaderboard...");
   const values = await runTransaction((tx) => {
     return tx.user.findMany({
       orderBy: { mmr: "desc" },
@@ -37,11 +34,7 @@ ctx.on("leaderboard:request", async (socket, args) => {
 
       ctx.emit(
         "leaderboard:sync",
-        {
-          index: args.start + idx,
-          name: value.username,
-          mmr: value.mmr,
-        },
+        [args.start + idx, value.username, value.mmr],
         socket.id,
       );
     }
