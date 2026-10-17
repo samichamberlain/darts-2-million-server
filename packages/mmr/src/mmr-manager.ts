@@ -3,15 +3,41 @@ import {
   Listeners,
   ServerSocket,
   WebSocketCtx,
+  io,
   type Emitters,
 } from "@packages/websockets";
 import z from "zod";
 
 import { runTransaction } from "@packages/db";
 
+const RAGE_QUIT_MMR_LOSS = 100;
+
 const MMREmitters = {
   "score:get": z.number(),
 } as const satisfies Emitters;
+
+io.on("connection", (socket) => {
+  socket.on("disconnect", () => {
+    if ((socket as ServerSocket).data.lobbyId) {
+      //They lose.... ragequit!
+      loseMmrRageQuit(socket as ServerSocket);
+    }
+  });
+});
+
+export function loseMmrRageQuit(socket: ServerSocket) {
+  if (!socket.data.mmr || !socket.data.username) return;
+
+  const mmr = Math.min(socket.data.mmr - RAGE_QUIT_MMR_LOSS, 0);
+  const username = socket.data.username ?? "";
+  //update user's mmr
+  runTransaction(async (tx) => {
+    await tx.user.update({
+      where: { username },
+      data: { mmr },
+    });
+  });
+}
 
 export function winSequence(
   winner: ServerSocket,
@@ -101,7 +127,7 @@ function mmr(mmrA: number, mmrB: number, winner: boolean) {
   const MAX_MMR_GAIN = winner ? MAX_MMR_WIN : MAX_MMR_LOSE;
 
   if (winner)
-    return Math.max(mmrA + Math.max(MAX_MMR_GAIN * (S - E), MIN_MMR_GAIN), 0)
+    return Math.max(mmrA + Math.max(MAX_MMR_GAIN * (S - E), MIN_MMR_GAIN), 0);
   else
     return Math.max(mmrA - Math.max(MAX_MMR_GAIN * (E - S), MIN_MMR_GAIN), 0);
 }
