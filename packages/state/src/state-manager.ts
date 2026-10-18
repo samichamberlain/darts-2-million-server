@@ -12,6 +12,7 @@ const StateListeners = {
 
 const StateEmitters = {
   "state:sync": z.string(),
+  "bot:gameover": z.object({ botMmr: z.number(), won: z.boolean() }),
 } as const satisfies Emitters;
 
 export const ctx = new WebSocketCtx(StateListeners, StateEmitters);
@@ -30,8 +31,6 @@ ctx.on("state:send", (socket, payload, lobbyId) => {
 
   setClientScore(socket, payload);
   const opponent = ctx.getOpponents(socket, lobbyId)[0];
-
-  console.log(socket.data.score, opponent.data.score);
 
   if (opponent) {
     if (Number(socket.data.score) <= 0) {

@@ -7,11 +7,9 @@ interface SocketMetadata {
   lobbyId?: string;
   isReady: boolean;
   score: number;
-
-  isInBotMatch?: boolean;
 }
 
-const defaultSocketMetadata = {
+const defaultSocketMetadata: Partial<SocketMetadata> = {
   isReady: false,
   lobbyId: undefined,
   score: 0,
@@ -124,9 +122,8 @@ export class WebSocketCtx<
   on<K extends keyof TListen & string>(
     event: K,
     handler: OnHandler<
-      //request zod type
+      //request zod type (request / response)
       z.infer<TListen[K]["req"]>,
-      //resposne zod type -- void if no response is defined.
       z.infer<TListen[K]["res"]>
     >,
   ) {
@@ -151,6 +148,10 @@ export class WebSocketCtx<
 
     //curry fn
     return this;
+  }
+
+  getSocketInQueue(socketId: string) {
+    return queue.find((s) => s.id == socketId);
   }
 
   joinQueue(socket: ServerSocket) {
@@ -195,6 +196,13 @@ export class WebSocketCtx<
 
   leaveQueue(socket: ServerSocket) {
     this.socketLeaveQueue(socket);
+  }
+
+  createLobby(sockets: ServerSocket[]) {
+    const lobbyId = generateLobbyCode(lobbyIter);
+    lobbies.set(lobbyId, new Set(sockets));
+    emitLobbyListeners(this.lobbyCreateListeners, lobbyId);
+    return lobbyId;
   }
 
   onLobbyCreate(callback: (lobbyId: string) => void) {

@@ -11,7 +11,6 @@ const MatchListeners = {
   "queue:join": { res: z.void() },
   "match:cancel": { res: z.boolean() },
   "match:ready": { res: z.boolean() },
-  "match:ready:bot": { res: z.boolean() },
 
   "match:connected": { res: z.boolean() },
 } as const satisfies Listeners;
@@ -22,7 +21,7 @@ const MatchEmitters = {
   "match:start": z.null(),
 
   "match:connected": z.boolean(),
-  "match:bot": z.null(),
+  "offer:bot": z.null(),
 } as const satisfies Emitters;
 
 export const ctx = new WebSocketCtx(MatchListeners, MatchEmitters);
@@ -42,7 +41,7 @@ ctx.on("queue:join", (socket) => {
   queueTimers.set(
     socket.id,
     setTimeout(() => {
-      ctx.emit("match:bot", null, socket.id);
+      ctx.emit("offer:bot", null, socket.id);
     }, BOT_TIMEOUT),
   );
 });
@@ -54,8 +53,6 @@ ctx.onLobbyCreate((lobbyId) => {
   const players = ctx.clientsInLobby(lobbyId);
 
   if (players) {
-    console.log([...players]?.map((p) => p.data));
-
     players.forEach((p) => {
       const lobby = p.id;
 
@@ -92,6 +89,8 @@ ctx.on("match:ready", (socket) => {
 });
 
 ctx.on("match:cancel", (socket, _payload, lobbyId) => {
+  //Remove the flag for giving this socket a bot, if applicable.
+
   if (!lobbyId) {
     ctx.leaveQueue(socket);
     return true;

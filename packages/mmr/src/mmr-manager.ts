@@ -16,6 +16,15 @@ const MMREmitters = {
   "score:get": z.number(),
 } as const satisfies Emitters;
 
+const MMRListeners = {
+  "bot:gameover": {
+    req: z.object({
+      win: z.boolean(),
+      botMmr: z.number(),
+    }),
+  },
+} as const satisfies Listeners;
+
 io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     if ((socket as ServerSocket).data.lobbyId) {
@@ -23,6 +32,12 @@ io.on("connection", (socket) => {
       loseMmrRageQuit(socket as ServerSocket);
     }
   });
+});
+
+export const ctx = new WebSocketCtx(MMRListeners, MMREmitters);
+
+ctx.on("bot:gameover", (socket, payload) => {
+  checkBotGameWin(socket, payload.win, payload.botMmr);
 });
 
 export function loseMmrRageQuit(socket: ServerSocket) {
@@ -39,12 +54,37 @@ export function loseMmrRageQuit(socket: ServerSocket) {
   });
 }
 
+export function checkBotGameWin(
+  socket: ServerSocket,
+  win: boolean,
+  botMmr: number,
+) {
+  const mmr = calculateMmr(socket.data.mmr as number, botMmr, win);
+  runTransaction(async (tx) => {
+    await tx.user.update({
+      where: { username: socket.data.username },
+      data: { mmr },
+    });
+  });
+
+  ctx.emit("score:get", mmr, socket.id);
+}
+
 export function winSequence(
   winner: ServerSocket,
   loser: ServerSocket,
   lobbyId: string,
 ) {
-  const mmr = calculateMmr(winner, loser);
+  const winnerMmr = calculateMmr(
+    winner.data.mmr as number,
+    loser.data.mmr as number,
+    true,
+  );
+  const loserMmr = calculateMmr(
+    loser.data.mmr as number,
+    winner.data.mmr as number,
+    false,
+  );
 
   const winnerName = winner.data.username as string;
   const loserName = loser.data.username as string;
@@ -53,17 +93,17 @@ export function winSequence(
   runTransaction(async (tx) => {
     await tx.user.update({
       where: { username: winnerName },
-      data: { mmr: mmr[winnerName] },
+      data: { mmr: winnerMmr },
     });
 
     await tx.user.update({
       where: { username: loserName },
-      data: { mmr: mmr[loserName] },
+      data: { mmr: loserMmr },
     });
   });
 
-  ctx.emit("score:get", mmr[winnerName], winner.id);
-  ctx.emit("score:get", mmr[loserName], loser.id);
+  ctx.emit("score:get", winnerMmr, winner.id);
+  ctx.emit("score:get", loserMmr, loser.id);
 
   loser.leave(lobbyId);
   winner.leave(lobbyId);
@@ -71,8 +111,6 @@ export function winSequence(
   ctx.resetSocketMetadata(loser);
   ctx.resetSocketMetadata(winner);
 }
-
-export const ctx = new WebSocketCtx({} as Listeners, MMREmitters);
 
 export function setClientScore(socket: ServerSocket, payload: string): void {
   const bytes = JSON.parse(payload);
@@ -95,25 +133,22 @@ export function setClientScore(socket: ServerSocket, payload: string): void {
 }
 
 export function calculateMmr(
-  winner: ServerSocket,
-  loser: ServerSocket,
-): { [id: string]: number } {
-  const winnerMmr = mmr(
-    winner.data.mmr as number,
-    loser.data.mmr as number,
-    true,
-  );
+  user: number,
+  opponent: number,
+  win: boolean,
+): number {
+  return mmr(user, opponent, win);
 
-  const loserMmr = mmr(
-    loser.data.mmr as number,
-    winner.data.mmr as number,
-    false,
-  );
+  // const loserMmr = mmr(
+  //   loser.data.mmr as number,
+  //   winner.data.mmr as number,
+  //   false,
+  // );
 
-  return {
-    [winner.data.username as string]: winnerMmr,
-    [loser.data.username as string]: loserMmr,
-  };
+  // return {
+  //   [winner.data.username as string]: winnerMmr,
+  //   [loser.data.username as string]: loserMmr,
+  // };
 }
 
 const MMR_PROBABILITY_FACTOR: number = 10;

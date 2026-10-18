@@ -19,7 +19,6 @@ const LeaderboardEmitters = {
 export const ctx = new WebSocketCtx(LeaderboardListeners, LeaderboardEmitters);
 
 ctx.on("leaderboard:request", async (socket, args) => {
-  console.log("requesting leaderboard...");
   const values = await runTransaction((tx) => {
     return tx.user.findMany({
       orderBy: { mmr: "desc" },

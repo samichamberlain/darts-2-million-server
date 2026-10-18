@@ -21,8 +21,6 @@ const AuthEmitters = {
 export const ctx = new WebSocketCtx(AuthListeners, AuthEmitters);
 
 ctx.on("login", async (socket, args) => {
-  console.log("logging in...", socket.id);
-
   //check if the user has an account....
   let account = await runTransaction(async (tx) => {
     const user = await tx.user.findFirst({
