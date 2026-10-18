@@ -43,6 +43,7 @@ ctx.on("queue:join", (socket) => {
     socket.id,
     setTimeout(() => {
       ctx.emit("offer:bot", null, socket.id);
+      ctx.leaveQueue(socket);
     }, BOT_TIMEOUT),
   );
 });
