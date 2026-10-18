@@ -92,6 +92,7 @@ ctx.on("match:ready", (socket) => {
 
 ctx.on("match:cancel", (socket, _payload, lobbyId) => {
   //Remove the flag for giving this socket a bot, if applicable.
+  clearTimeout(queueTimers.get(socket.id));
 
   if (!lobbyId) {
     ctx.leaveQueue(socket);
