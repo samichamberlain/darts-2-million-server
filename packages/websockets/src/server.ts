@@ -13,7 +13,7 @@ interface SocketMetadata {
 const defaultSocketMetadata: Partial<SocketMetadata> = {
   isReady: false,
   lobbyId: undefined,
-  score: 0,
+  score: 1000000,
   isInBotMatch: false,
 };
 
@@ -229,7 +229,7 @@ export class WebSocketCtx<
   }
 
   resetSocketMetadata(socket: ServerSocket) {
-    socket.data = { ...defaultSocketMetadata, ...socket.data };
+    socket.data = { ...socket.data, ...defaultSocketMetadata };
   }
 
   getOpponents(socket: ServerSocket, lobbyId: string) {

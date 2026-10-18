@@ -75,6 +75,7 @@ export function checkBotGameWin(
   ctx.emit("score:get", mmr, socket.id);
 
   socket.leave(lobbyId);
+  socket.data.mmr = mmr;
   ctx.resetSocketMetadata(socket);
 }
 
@@ -83,7 +84,7 @@ export function winSequence(
   loser: ServerSocket,
   lobbyId: string,
 ) {
-  console.log("calling win... ", winner.id, loser.id);
+  console.log("calling win...", winner.id, loser.id);
   const winnerMmr = calculateMmr(
     winner.data.mmr as number,
     loser.data.mmr as number,
@@ -95,7 +96,7 @@ export function winSequence(
     false,
   );
 
-  console.log(winnerMmr, loserMmr);
+  console.log(`MMR WINNER: ${winnerMmr}`, `MMR LOSER: ${loserMmr}`);
 
   const winnerName = winner.data.username as string;
   const loserName = loser.data.username as string;
@@ -118,6 +119,9 @@ export function winSequence(
 
   loser.leave(lobbyId);
   winner.leave(lobbyId);
+
+  winner.data.mmr = winnerMmr;
+  loser.data.mmr = loserMmr;
 
   ctx.resetSocketMetadata(loser);
   ctx.resetSocketMetadata(winner);
@@ -173,7 +177,11 @@ function mmr(mmrA: number, mmrB: number, winner: boolean) {
   const MAX_MMR_GAIN = winner ? MAX_MMR_WIN : MAX_MMR_LOSE;
 
   if (winner)
-    return Math.max(mmrA + Math.max(MAX_MMR_GAIN * (S - E), MIN_MMR_GAIN), 0);
+    return Math.round(
+      Math.max(mmrA + Math.max(MAX_MMR_GAIN * (S - E), MIN_MMR_GAIN), 0),
+    );
   else
-    return Math.max(mmrA - Math.max(MAX_MMR_GAIN * (E - S), MIN_MMR_GAIN), 0);
+    return Math.round(
+      Math.max(mmrA - Math.max(MAX_MMR_GAIN * (E - S), MIN_MMR_GAIN), 0),
+    );
 }
