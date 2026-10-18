@@ -43,7 +43,7 @@ ctx.on("bot:gameover", (socket, payload) => {
 export function loseMmrRageQuit(socket: ServerSocket) {
   if (!socket.data.mmr || !socket.data.username) return;
 
-  const mmr = Math.min(socket.data.mmr - RAGE_QUIT_MMR_LOSS, 0);
+  const mmr = Math.max(socket.data.mmr - RAGE_QUIT_MMR_LOSS, 0);
   const username = socket.data.username ?? "";
   //update user's mmr
   runTransaction(async (tx) => {
