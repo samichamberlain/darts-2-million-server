@@ -78,6 +78,7 @@ export function winSequence(
   loser: ServerSocket,
   lobbyId: string,
 ) {
+  console.log("calling win... ", winner.id, loser.id);
   const winnerMmr = calculateMmr(
     winner.data.mmr as number,
     loser.data.mmr as number,
@@ -88,6 +89,8 @@ export function winSequence(
     winner.data.mmr as number,
     false,
   );
+
+  console.log(winnerMmr, loserMmr);
 
   const winnerName = winner.data.username as string;
   const loserName = loser.data.username as string;
