@@ -32,6 +32,8 @@ ctx.on("state:send", (socket, payload, lobbyId) => {
   setClientScore(socket, payload);
   const opponent = ctx.getOpponents(socket, lobbyId)[0];
 
+  console.log("OPPONENT: " + opponent);
+
   if (opponent) {
     if (Number(socket.data.score) <= 0) {
       console.log(`Host won! Socket ID: ${socket.id}`);
