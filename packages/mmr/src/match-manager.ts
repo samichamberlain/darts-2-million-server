@@ -11,6 +11,7 @@ const MatchListeners = {
   "queue:join": { res: z.void() },
   "match:cancel": { res: z.boolean() },
   "match:ready": { res: z.boolean() },
+  "match:ready:bot": { res: z.boolean() },
 
   "match:connected": { res: z.boolean() },
 } as const satisfies Listeners;

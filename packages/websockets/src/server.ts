@@ -7,6 +7,8 @@ interface SocketMetadata {
   lobbyId?: string;
   isReady: boolean;
   score: number;
+
+  isInBotMatch?: boolean;
 }
 
 const defaultSocketMetadata = {
@@ -63,6 +65,7 @@ export class WebSocketCtx<
   TEmit extends Emitters,
 > {
   public io: Server = instance;
+  private onHandlerRegistry = new Map<string, RegistryEntry[]>();
 
   private lobbyCreateListeners: LobbyEvent[] = [];
   private lobbyDeleteListeners: LobbyEvent[] = [];
@@ -95,8 +98,6 @@ export class WebSocketCtx<
     }
   }
 
-  private onHandlerRegistry = new Map<string, RegistryEntry[]>();
-
   //zod schema inference for emit and on callbacks
   constructor(
     private listeners: TListen,
@@ -126,7 +127,7 @@ export class WebSocketCtx<
       //request zod type
       z.infer<TListen[K]["req"]>,
       //resposne zod type -- void if no response is defined.
-      TListen[K]["res"] extends z.ZodType ? z.infer<TListen[K]["res"]> : void
+      z.infer<TListen[K]["res"]>
     >,
   ) {
     const entry: RegistryEntry = {
@@ -273,15 +274,13 @@ type RegistryEntry = {
   handler: OnHandler<any, any>;
 };
 
-type Ack = (res: unknown) => void;
-
 //Bind client callback handlers
 function bindCallbacks(
   socket: ServerSocket,
   event: string,
   { request, handler }: RegistryEntry,
 ) {
-  socket.on(event, async (payload: unknown, ack?: Ack) => {
+  socket.on(event, async (payload: unknown, ack?: (res: unknown) => void) => {
     const parsed = request
       ? request.safeParse(payload)
       : //Request is optional... we pass and send no data if no request is passed.
