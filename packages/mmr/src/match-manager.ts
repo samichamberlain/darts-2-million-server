@@ -51,6 +51,9 @@ ctx.on("queue:join", (socket) => {
 ctx.onLobbyCreate((lobbyId) => {
   ctx.emit("match:found", null, lobbyId);
 
+  //Remove the flag for giving this socket a bot, if applicable.
+  clearTimeout(queueTimers.get(socket.id));
+
   //get other player in lobby
   const players = ctx.clientsInLobby(lobbyId);
 
@@ -107,4 +110,7 @@ ctx.on("match:cancel", (socket, _payload, lobbyId) => {
 
 ctx.on("bot:start", (socket) => {
   socket.data.isInBotMatch = true;
+
+  //Remove the flag for giving this socket a bot, if applicable.
+  clearTimeout(queueTimers.get(socket.id));
 });
