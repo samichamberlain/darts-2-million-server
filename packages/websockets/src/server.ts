@@ -116,7 +116,7 @@ export class WebSocketCtx<
       socket.on("disconnect", () => {
         console.log(`Client disconnected: ${socket.id}`);
         this.socketLeaveQueue(socket as ServerSocket);
-        this.socketLeaveLobby(socket as ServerSocket);
+        // this.socketLeaveLobby(socket as ServerSocket);
       });
     });
   }

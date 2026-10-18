@@ -10,7 +10,7 @@ import z from "zod";
 
 import { runTransaction } from "@packages/db";
 
-const RAGE_QUIT_MMR_LOSS = 100;
+// const RAGE_QUIT_MMR_LOSS = 100;
 
 const MMREmitters = {
   "score:get": z.number(),
@@ -25,14 +25,16 @@ const MMRListeners = {
   },
 } as const satisfies Listeners;
 
-io.on("connection", (socket) => {
-  socket.on("disconnect", () => {
-    if ((socket as ServerSocket).data.lobbyId) {
-      //They lose.... ragequit!
-      loseMmrRageQuit(socket as ServerSocket);
-    }
-  });
-});
+// io.on("connection", (socket) => {
+//   socket.on("disconnecting", () => {
+//     console.log(socket.data);
+
+//     // if (isInlobby) {
+//     //   //They lose.... ragequit!
+//     //   loseMmrRageQuit(socket as ServerSocket);
+//     // }
+//   });
+// });
 
 export const ctx = new WebSocketCtx(MMRListeners, MMREmitters);
 
@@ -40,20 +42,20 @@ ctx.on("bot:gameover", (socket, payload, lobbyId) => {
   checkBotGameWin(socket, payload.win, payload.botMmr, lobbyId);
 });
 
-export function loseMmrRageQuit(socket: ServerSocket) {
-  console.log("RAGE QUIT");
-  if (!socket.data.mmr || !socket.data.username) return;
+// export function loseMmrRageQuit(socket: ServerSocket) {
+//   console.log("RAGE QUIT");
+//   if (!socket.data.mmr || !socket.data.username) return;
 
-  const mmr = Math.max(socket.data.mmr - RAGE_QUIT_MMR_LOSS, 0);
-  const username = socket.data.username ?? "";
-  //update user's mmr
-  runTransaction(async (tx) => {
-    await tx.user.update({
-      where: { username },
-      data: { mmr },
-    });
-  });
-}
+//   const mmr = Math.max(socket.data.mmr - RAGE_QUIT_MMR_LOSS, 0);
+//   const username = socket.data.username ?? "";
+//   //update user's mmr
+//   runTransaction(async (tx) => {
+//     await tx.user.update({
+//       where: { username },
+//       data: { mmr },
+//     });
+//   });
+// }
 
 export function checkBotGameWin(
   socket: ServerSocket,
