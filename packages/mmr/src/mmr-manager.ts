@@ -59,6 +59,9 @@ export function checkBotGameWin(
   win: boolean,
   botMmr: number,
 ) {
+  // For practice -- bot mode but not
+  if (!socket.data.isInBotMatch) return;
+
   const mmr = calculateMmr(socket.data.mmr as number, botMmr, win);
   runTransaction(async (tx) => {
     await tx.user.update({

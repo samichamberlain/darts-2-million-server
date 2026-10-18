@@ -13,6 +13,7 @@ const MatchListeners = {
   "match:ready": { res: z.boolean() },
 
   "match:connected": { res: z.boolean() },
+  "bot:start": {},
 } as const satisfies Listeners;
 
 const MatchEmitters = {
@@ -100,4 +101,8 @@ ctx.on("match:cancel", (socket, _payload, lobbyId) => {
   ctx.emit("match:cancel", null, lobbyId);
 
   return true;
+});
+
+ctx.on("bot:start", (socket) => {
+  socket.data.isInBotMatch = true;
 });

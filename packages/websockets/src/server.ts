@@ -7,12 +7,14 @@ interface SocketMetadata {
   lobbyId?: string;
   isReady: boolean;
   score: number;
+  isInBotMatch: boolean;
 }
 
 const defaultSocketMetadata: Partial<SocketMetadata> = {
   isReady: false,
   lobbyId: undefined,
   score: 0,
+  isInBotMatch: false,
 };
 
 //Attach lobby id to socket for ease of access.
