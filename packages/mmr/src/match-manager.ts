@@ -51,15 +51,15 @@ ctx.on("queue:join", (socket) => {
 ctx.onLobbyCreate((lobbyId) => {
   ctx.emit("match:found", null, lobbyId);
 
-  //Remove the flag for giving this socket a bot, if applicable.
-  clearTimeout(queueTimers.get(socket.id));
-
   //get other player in lobby
   const players = ctx.clientsInLobby(lobbyId);
 
   if (players) {
     players.forEach((p) => {
       const lobby = p.id;
+
+      //Remove the flag for giving this socket a bot, if applicable.
+      clearTimeout(queueTimers.get(p.id));
 
       //Clear bot match timer
       if (queueTimers.get(p.id)) {
