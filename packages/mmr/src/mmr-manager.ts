@@ -41,6 +41,7 @@ ctx.on("bot:gameover", (socket, payload) => {
 });
 
 export function loseMmrRageQuit(socket: ServerSocket) {
+  console.log("RAGE QUIT");
   if (!socket.data.mmr || !socket.data.username) return;
 
   const mmr = Math.max(socket.data.mmr - RAGE_QUIT_MMR_LOSS, 0);
