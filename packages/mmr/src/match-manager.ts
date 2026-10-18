@@ -28,7 +28,7 @@ const MatchEmitters = {
 export const ctx = new WebSocketCtx(MatchListeners, MatchEmitters);
 
 const queueTimers = new Map<string, NodeJS.Timeout>();
-const BOT_TIMEOUT = 15000;
+const BOT_TIMEOUT = 10000;
 
 //health check
 ctx.on("match:connected", () => {
