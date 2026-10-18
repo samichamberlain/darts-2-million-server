@@ -36,8 +36,8 @@ io.on("connection", (socket) => {
 
 export const ctx = new WebSocketCtx(MMRListeners, MMREmitters);
 
-ctx.on("bot:gameover", (socket, payload) => {
-  checkBotGameWin(socket, payload.win, payload.botMmr);
+ctx.on("bot:gameover", (socket, payload, lobbyId) => {
+  checkBotGameWin(socket, payload.win, payload.botMmr, lobbyId);
 });
 
 export function loseMmrRageQuit(socket: ServerSocket) {
@@ -59,6 +59,7 @@ export function checkBotGameWin(
   socket: ServerSocket,
   win: boolean,
   botMmr: number,
+  lobbyId: string,
 ) {
   // For practice -- bot mode but not
   if (!socket.data.isInBotMatch) return;
@@ -72,6 +73,9 @@ export function checkBotGameWin(
   });
 
   ctx.emit("score:get", mmr, socket.id);
+
+  socket.leave(lobbyId);
+  ctx.resetSocketMetadata(socket);
 }
 
 export function winSequence(
